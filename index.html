@@ -1,10 +1,29 @@
-<!DOCTYPE html>
+`<!DOCTYPE html>
 <html>
 <head>
     <title>Strona główna</title>
+    <style>
+        .container {
+            display: flex;
+        }
+
+        .form-container, .output-container {
+            width: 50%;
+        }
+
+        .output-container {
+            border: 1px solid #000;
+            height: 500px;
+            overflow: auto;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
-    <form action="/submit" method="post">
+    <div class="container">
+        <div class="form-container">
+            <form action="/submit" method="post">
+                    <form action="/submit" method="post">
         <label for="invoiceNumber">Nr. faktury:</label><br>
             <input type="text" id="invoiceNumber" name="invoiceNumber" pattern="\d*"><br>
 
@@ -38,5 +57,12 @@
                 <input type="button" value="Wczytaj plik" id="loadFileButton">
     
         </form>
+            </form>
+        </div>
+
+        <div class="output-container" id="output">
+            <!-- Tutaj będzie wyświetlany output programu -->
+        </div>
+    </div>
 </body>
 </html>
