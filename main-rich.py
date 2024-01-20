@@ -59,7 +59,7 @@ def save_invoice_data(invoice_data, file_path='data.json'):
         json.dump(data, file)
 
 def get_invoice_data():
-    #Funkcja pobierająca dane faktury od użytkownika, zwraca dane faktury. Sprawdza poprawność wprowadzonych danych.
+    # Funkcja pobierająca dane faktury od użytkownika, zwraca dane faktury. Sprawdza poprawność wprowadzonych danych.
     invoice_data = {}
 
     invoice_number = Prompt.ask("Nr. faktury: ")
@@ -72,21 +72,22 @@ def get_invoice_data():
         value = Prompt.ask("Nieprawidłowa wartość faktury. Wprowadź ponownie: ")
     invoice_data['value'] = float(value)
 
-    currency = Prompt.ask("Waluta: ")
-    while not re.match(r"^[A-Z]{3}$", currency):
-        currency = Prompt.ask("Nieprawidłowa waluta. Wprowadź ponownie: ")
+    currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ")
+    while not re.match(r"^(EUR|USD|GBP|PLN)$", currency):
+        currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN. Wprowadź ponownie: ")
     invoice_data['currency'] = currency
 
+    current_date = datetime.now().strftime('%Y-%m-%d')
     issue_date = Prompt.ask("Data wystawienia (YYYY-MM-DD): ")
-    while not re.match(r"^\d{4}-\d{2}-\d{2}$", issue_date):
+    while not re.match(r"^\d{4}-\d{2}-\d{2}$", issue_date) or issue_date > current_date:
         issue_date = Prompt.ask("Nieprawidłowa data wystawienia. Wprowadź ponownie: ")
     invoice_data['issue_date'] = issue_date
 
     payment_date = Prompt.ask("Data zapłaty (YYYY-MM-DD): ")
-    while not re.match(r"^\d{4}-\d{2}-\d{2}$", payment_date):
+    while not re.match(r"^\d{4}-\d{2}-\d{2}$", payment_date) or payment_date < issue_date:
         payment_date = Prompt.ask("Nieprawidłowa data zapłaty. Wprowadź ponownie: ")
     invoice_data['payment_date'] = payment_date
-    print(invoice_data)
+
     return invoice_data
     
 def display_results(invoices):
