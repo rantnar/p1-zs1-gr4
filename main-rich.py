@@ -11,6 +11,8 @@ from rich.table import Table
 console = Console()
 
 def get_exchange_rate(currency, date_issue, date_payment):
+    #Funkcja pobierająca kursy walut z API NBP na podstawie podanych parametrów, 
+    #zwraca kursy walut w dniu wystawienia i płatności faktury.
     try:
         response_issue = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date_issue}/?format=json")
         response_payment = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date_payment}/?format=json")
@@ -34,33 +36,30 @@ def get_exchange_rate(currency, date_issue, date_payment):
     return data_issue["rates"][0]["mid"], data_payment["rates"][0]["mid"]
 
 def calculate_exchange_rate_difference(invoice_amount, currency, date_issue, date_payment):
+    #Funkcja obliczająca różnicę kursową na podstawie podanych parametrów, zwraza różnicę kursową.
 
     issue_rate, payment_rate = get_exchange_rate(currency, date_issue, date_payment)
 
-
+    #Zmienna invoice_amount jest typu string, konwersja na float jest wymagana do poprawnego działania funkcji.
     invoice_amount = float(invoice_amount)
-
+    
     amount_in_pln_issue = invoice_amount * issue_rate
     amount_in_pln_payment = invoice_amount * payment_rate
-
     return amount_in_pln_payment - amount_in_pln_issue
 
 def save_invoice_data(invoice_data, file_path='data.json'):
-
+    #Funkcja zapisująca dane faktury do pliku JSON.
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         data = []
-
-
     data.append(invoice_data)
-
-
     with open(file_path, 'w') as file:
         json.dump(data, file)
 
 def get_invoice_data():
+    #Funkcja pobierająca dane faktury od użytkownika, zwraca dane faktury. Sprawdza poprawność wprowadzonych danych.
     invoice_data = {}
 
     invoice_number = Prompt.ask("Nr. faktury: ")
@@ -91,6 +90,7 @@ def get_invoice_data():
     return invoice_data
     
 def display_results(invoices):
+    #Funkcja wyświetlająca wyniki w tabeli.
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Numer faktury")
     table.add_column("Kurs waluty w dniu wystawienia faktury")
@@ -98,6 +98,7 @@ def display_results(invoices):
     table.add_column("Różnica kursowa wynosi")
 
     for invoice in invoices:
+        #Pętla przetwarzająca dane faktury i dodająca wyniki do tabeli.
         issue_rate, payment_rate, difference = process_invoice(invoice)
         if issue_rate is not None and payment_rate is not None and difference is not None:
             difference_str = str(round(difference, 2)) + " PLN"
@@ -108,12 +109,14 @@ def display_results(invoices):
             table.add_row(str(invoice['invoice_number']), str(issue_rate), str(payment_rate), difference_str)
         else:
             print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
-
     console.print(table)
+
 def print_error(msg):
+    #Funkcja wyświetlająca komunikat o błędzie.
     console.print(msg, style="bold red")
 
 def process_invoice(invoice_data):
+    #Funkcja przetwarzająca dane faktury, zwraca kursy walut w dniu wystawienia i płatności faktury oraz różnicę kursową.
     currency = invoice_data['currency']
     issue_date = invoice_data['issue_date']
     payment_date = invoice_data['payment_date']
@@ -130,6 +133,7 @@ def process_invoice(invoice_data):
         return None, None, None   
 
 def run_interactive_mode():
+    #Funkcja uruchamiająca tryb interaktywny.
     while True:
         invoice_data = get_invoice_data()
         if invoice_data is None:
@@ -140,13 +144,12 @@ def run_interactive_mode():
                 save_invoice_data(invoice_data)
                 display_results([invoice_data]) 
                 break
-
-
         continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną płatność? (t/n) ")
         if continue_input.lower() != 't':
             break
 
 def run_batch_mode():
+    #Funkcja uruchamiająca tryb wsadowy.
     file_path = Prompt.ask("Podaj ścieżkę do pliku z danymi: ")
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -154,6 +157,7 @@ def run_batch_mode():
     console.input("Naciśnij Enter, aby kontynuować...\n")
 
 def load_invoices(file_path='data.json'):
+    #Funkcja wczytująca dane faktur z pliku JSON.
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -162,6 +166,7 @@ def load_invoices(file_path='data.json'):
     return data
 
 def main():
+    #Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
     console.print("Witaj w programie do obliczania różnic kursowych!\n")
     console.print("Wybierz tryb pracy:\n")
     console.print("1. Tryb interaktywny\n")
@@ -177,6 +182,7 @@ def main():
         run_batch_mode()
 
 if __name__ == '__main__':
+    #Wywołanie funkcji głównej programu.
     try:
         main()
     except Exception:
