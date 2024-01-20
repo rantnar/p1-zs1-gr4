@@ -62,9 +62,13 @@ def get_invoice_data():
     # Funkcja pobierająca dane faktury od użytkownika, zwraca dane faktury. Sprawdza poprawność wprowadzonych danych.
     invoice_data = {}
 
+    # Wczytanie danych z pliku
+    with open('data.json', 'r') as file:
+        existing_invoices = json.load(file)
+
     invoice_number = Prompt.ask("Nr. faktury: ")
-    while not re.match(r"^\d+$", invoice_number):
-        invoice_number = Prompt.ask("Nieprawidłowy numer faktury. Wprowadź ponownie: ")
+    while not re.match(r"^\d+$", invoice_number) or any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices):
+        invoice_number = Prompt.ask("Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: ")
     invoice_data['invoice_number'] = invoice_number
 
     value = Prompt.ask("Wartość faktury: ")
