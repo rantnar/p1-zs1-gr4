@@ -3,5 +3,6 @@
 ## Aby uruchomić program musicie mieć zainstalowany python i pip
 ### Potrzebne biblioteki instalowane z pip:
     - rich (pip install rich)
+    - requests (pip install requests)
 
 
