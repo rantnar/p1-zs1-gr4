@@ -160,16 +160,7 @@ def run_batch_mode():
         data = json.load(file)
         display_results(data)
     console.input("Naciśnij Enter, aby kontynuować...\n")
-
-def load_invoices(file_path='data.json'):
-    #Funkcja wczytująca dane faktur z pliku JSON.
-    try:
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = []
-    return data
-
+    
 def main():
     #Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
     console.print("Witaj w programie do obliczania różnic kursowych!\n")
