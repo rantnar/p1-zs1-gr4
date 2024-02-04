@@ -156,7 +156,7 @@ def run_interactive_mode():
 def run_batch_mode():
     #Funkcja uruchamiająca tryb wsadowy.
     while True:
-        file_path = Prompt.ask("Podaj ścieżkę do pliku z danymi: ")
+        file_path = Prompt.ask("Podaj pełną ścieżkę do pliku z danymi: ")
 
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
