@@ -10,30 +10,28 @@ from rich.table import Table
 #Inicializacja konsoli
 console = Console()
 
-def get_exchange_rate(currency, date_issue, date_payment):
-    #Funkcja pobierająca kursy walut z API NBP na podstawie podanych parametrów, 
-    #zwraca kursy walut w dniu wystawienia i płatności faktury.
+def get_exchange_rate_for_date(currency, date):
     try:
-        response_issue = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date_issue}/?format=json")
-        response_payment = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date_payment}/?format=json")
-        response_issue.raise_for_status()
-        response_payment.raise_for_status()
+        response = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/?format=json")
+        response.raise_for_status()
     except requests.exceptions.HTTPError as errh:
-        print("Błąd HTTP: {}. Brak danych dla podanej daty.\n".format(errh))
-        return None, None
+        raise Exception("Błąd HTTP: {}. Brak danych dla podanej daty.".format(errh))
     except requests.exceptions.ConnectionError as errc:
-        print ("Error Connecting:",errc)
-        return None, None
+        raise Exception("Error Connecting:",errc)
     except requests.exceptions.Timeout as errt:
-        print ("Timeout Error:",errt)
-        return None, None
+        raise Exception("Timeout Error:",errt)
     except requests.exceptions.RequestException as err:
-        print ("Something went wrong",err)
-        return None
+        raise Exception("Something went wrong",err)
 
-    data_issue = response_issue.json()
-    data_payment = response_payment.json()
-    return data_issue["rates"][0]["mid"], data_payment["rates"][0]["mid"]
+    data = response.json()
+    return data["rates"][0]["mid"]
+
+def get_exchange_rate(currency, date_issue, date_payment):
+    if currency.upper() == 'PLN':
+        return 1, 1
+    issue_rate = get_exchange_rate_for_date(currency, date_issue)
+    payment_rate = issue_rate if date_issue == date_payment else get_exchange_rate_for_date(currency, date_payment)
+    return issue_rate, payment_rate
 
 def calculate_exchange_rate_difference(invoice_amount, currency, date_issue, date_payment):
     #Funkcja obliczająca różnicę kursową na podstawie podanych parametrów, zwraza różnicę kursową.
