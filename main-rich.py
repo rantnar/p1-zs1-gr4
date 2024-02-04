@@ -154,30 +154,21 @@ def run_interactive_mode():
             break
 
 def run_batch_mode():
-    #Funkcja uruchamiająca tryb wsadowy
+    # Funkcja uruchamiająca tryb wsadowy.
     while True:
-        file_path = Prompt.ask("Podaj pełną ścieżkę do pliku z danymi: ")
+        file_path = Prompt.ask("Podaj ścieżkę do pliku z danymi: ")
 
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 data = json.load(file)
-
-                #Sprawdzenie, czy wszystkie wymagane klucze są obecne
-                required_keys = ["invoice_number", "value", "currency", "issue_date", "payment_date"]
-                missing_keys = [key for key in required_keys if key not in data]
-
-                if missing_keys:
-                    # Zgłoszenie błędu, jeśli brakuje wymaganych kluczy
-                    missing_keys_str = ", ".join(missing_keys)
-                    print_error(f"Plik JSON jest niekompletny. Brakujące klucze: {missing_keys_str}")
-                else:
-                    # Wyświetlenie wyników, jeśli plik jest kompletny
-                    display_results(data)
-                    break #Przerywa pętle, jeśli plik został wczytany poprawnie
+                display_results(data)
+                break  # Przerywa pętlę, jeśli plik został wczytany poprawnie
         except FileNotFoundError:
             print_error("Plik nie został znaleziony. Podaj poprawną ścieżkę.")
         except json.JSONDecodeError:
             print_error("Nieprawidłowy format pliku JSON. Podaj poprawny plik.")
+        except ValueError as e:
+            print_error(str(e))
 
     console.input("Naciśnij Enter, aby kontynuować...\n")
     
