@@ -1,6 +1,8 @@
 #Importy bibliotek
 import requests
 import json
+# from questionary import Prompt, print_error
+# from questionary import console
 from datetime import datetime
 import re
 import traceback
@@ -155,10 +157,19 @@ def run_interactive_mode():
 
 def run_batch_mode():
     #Funkcja uruchamiająca tryb wsadowy.
-    file_path = Prompt.ask("Podaj ścieżkę do pliku z danymi: ")
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-        display_results(data)
+    while True:
+        file_path = Prompt.ask("Podaj ścieżkę do pliku z danymi: ")
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                data = json.load(file)
+                display_results(data)
+                break #Przerywa pętle, jeśli plik został wczytany poprawnie
+        except FileNotFoundError:
+            print_error("Plik nie został znaleziony. Podaj poprawną ścieżkę.")
+        except json.JSONDecodeError:
+            print_error("Nieprawidłowy format pliku JSON. Podaj poprawny plik.")
+
     console.input("Naciśnij Enter, aby kontynuować...\n")
     
 def main():
