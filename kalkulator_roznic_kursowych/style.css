@@ -1,0 +1,61 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: "Arial", sans-serif;
+}
+header {
+    padding: 2em;
+    text-align: center;
+    background-color: #4C495D;
+    color: #ffffffff;
+}
+h2 {
+    font-size: 1.5em;
+    padding: 1em 1em 3em 1em;
+}
+p {
+    font-size: 1.2em;
+    padding-bottom: 1.4em;
+}
+input {
+    height: 2.1em;
+}
+.main-container {
+    display: flex;
+}
+.invoice, .payment_info {
+    flex: 50%;
+    padding: 1.2em 0 1.2em 0;
+    background-color: #ffffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.container-submit-button {
+    text-align: center;
+}
+.form-submit-button {
+    width: 10em;
+    height: 3em;
+    font-size: 1.5em;
+    background: #B9DFFF;
+    color: #fff;
+    border: 1px solid #eee;
+    border-radius: 1em;
+    box-shadow: 5px 5px 5px #eee;
+    text-shadow: none;
+}
+.form-submit-button:hover {
+    width: 10em;
+    height: 3em;
+    font-size: 1.5em;
+    background: #016ABC;
+    color: #fff;
+    border: 1px solid #eee;
+    border-radius: 1em;
+    box-shadow: 5px 5px 5px #eee;
+    text-shadow: none;
+}
