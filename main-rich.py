@@ -58,39 +58,48 @@ def save_invoice_data(invoice_data, file_path='data.json'):
     with open(file_path, 'w') as file:
         json.dump(data, file)
 
+def validate_invoice_number(existing_invoices):
+    invoice_number = Prompt.ask("Nr. faktury: ")
+    while not re.match(r"^[a-zA-Z0-9-/]+$", invoice_number) or any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices):
+        invoice_number = Prompt.ask("Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: ")
+    return invoice_number
+
+def validate_value():
+    value = Prompt.ask("Wartość faktury: ")
+    while True:
+        try:
+            return float(value)
+        except ValueError:
+            value = Prompt.ask("Nieprawidłowa wartość faktury. Wprowadź ponownie: ")
+
+def validate_currency():
+    currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ")
+    while currency not in ['EUR', 'USD', 'GBP', 'PLN']:
+        currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN. Wprowadź ponownie: ")
+    return currency
+
+def validate_date(prompt_message, earliest_date=None):
+    date_str = Prompt.ask(prompt_message)
+    while True:
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d')
+            if earliest_date and date < earliest_date:
+                raise ValueError
+            return date_str
+        except ValueError:
+            date_str = Prompt.ask("Nieprawidłowa data. Wprowadź ponownie: ")
+
 def get_invoice_data():
-    # Funkcja pobierająca dane faktury od użytkownika, zwraca dane faktury. Sprawdza poprawność wprowadzonych danych.
     invoice_data = {}
 
-    # Wczytanie danych z pliku
     with open('data.json', 'r') as file:
         existing_invoices = json.load(file)
 
-    invoice_number = Prompt.ask("Nr. faktury: ")
-    while not re.match(r"^\d+$", invoice_number) or any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices):
-        invoice_number = Prompt.ask("Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: ")
-    invoice_data['invoice_number'] = invoice_number
-
-    value = Prompt.ask("Wartość faktury: ")
-    while not re.match(r"^\d+(\.\d{1,2})?$", value):
-        value = Prompt.ask("Nieprawidłowa wartość faktury. Wprowadź ponownie: ")
-    invoice_data['value'] = float(value)
-
-    currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ")
-    while not re.match(r"^(EUR|USD|GBP|PLN)$", currency):
-        currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN. Wprowadź ponownie: ")
-    invoice_data['currency'] = currency
-
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    issue_date = Prompt.ask("Data wystawienia (YYYY-MM-DD): ")
-    while not re.match(r"^\d{4}-\d{2}-\d{2}$", issue_date) or issue_date > current_date:
-        issue_date = Prompt.ask("Nieprawidłowa data wystawienia. Wprowadź ponownie: ")
-    invoice_data['issue_date'] = issue_date
-
-    payment_date = Prompt.ask("Data zapłaty (YYYY-MM-DD): ")
-    while not re.match(r"^\d{4}-\d{2}-\d{2}$", payment_date) or payment_date < issue_date:
-        payment_date = Prompt.ask("Nieprawidłowa data zapłaty. Wprowadź ponownie: ")
-    invoice_data['payment_date'] = payment_date
+    invoice_data['invoice_number'] = validate_invoice_number(existing_invoices)
+    invoice_data['value'] = validate_value()
+    invoice_data['currency'] = validate_currency()
+    invoice_data['issue_date'] = validate_date("Data wystawienia (YYYY-MM-DD): ")
+    invoice_data['payment_date'] = validate_date("Data zapłaty (YYYY-MM-DD): ", datetime.strptime(invoice_data['issue_date'], '%Y-%m-%d'))
 
     return invoice_data
     
