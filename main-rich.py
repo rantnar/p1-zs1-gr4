@@ -390,6 +390,12 @@ def run_batch_mode():
             print_error("Plik nie został znaleziony. Podaj poprawną ścieżkę.")
         except json.JSONDecodeError:
             print_error("Nieprawidłowy format pliku JSON. Podaj poprawny plik.")
+        except UnicodeDecodeError:
+            print("Nieprawidłowe kodowanie pliku. Wczytaj plik w innym formacie.")
+        except Exception as e:
+            print_error(str(e))
+            console.input("Naciśnij Enter, aby kontynuować...\n")
+            continue
         except ValueError as e:
             print_error(str(e))
 
