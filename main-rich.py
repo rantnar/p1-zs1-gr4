@@ -9,10 +9,12 @@ from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
 import os
-#Inicializacja konsoli
+#Inicjalizacja konsoli
 console = Console()
 
 def get_cached_data(currency, date):
+    #Odczytuje dane z pliku 'cache.json' dla danej waluty i daty, zwracając je, jeśli istnieją.
+
     try:
         with open('cache.json', 'r') as file:
             data = json.load(file)
@@ -23,6 +25,8 @@ def get_cached_data(currency, date):
     return None
 
 def get_data_from_api(currency, date):
+    #Pobiera dane z API NBP dla podanej waluty i daty, próbując do 7 dni wstecz, zwracając kurs średni waluty z danego dnia.
+
     date = datetime.strptime(date, "%Y-%m-%d")
     attempts = 0
     while attempts < 7:
@@ -44,6 +48,8 @@ def get_data_from_api(currency, date):
     raise Exception("Błąd HTTP: Brak danych dla podanej daty i 6 poprzednich dni.")
 
 def save_data_to_cache(currency, date, rate):
+    #Zapisuje dane do pamięci podręcznej (cache) w pliku JSON dla podanej waluty, daty i kursu.
+
     try:
         with open('cache.json', 'r') as file:
             cache_data = json.load(file)
@@ -58,6 +64,8 @@ def save_data_to_cache(currency, date, rate):
         json.dump(cache_data, file)
 
 def get_exchange_rate_for_date(currency, date):
+    #Pobiera kurs wymiany waluty dla podanej daty z pamięci podręcznej lub z API, a następnie zapisuje go do pamięci podręcznej.
+
     cached_data = get_cached_data(currency, date)
     if cached_data is not None:
         return cached_data
@@ -68,6 +76,10 @@ def get_exchange_rate_for_date(currency, date):
     return rate
 
 def get_exchange_rate(currency, date_issue, date_payment):
+    #Pobiera kurs wymiany waluty dla podanych dat daty emisji i daty płatności.
+    #Jeśli waluta to PLN, zwraca kursy 1:1.
+    #W przeciwnym razie pobiera kursy dla daty emisji i daty płatności.
+
     if currency.upper() == 'PLN':
         return 1, 1
     issue_rate = get_exchange_rate_for_date(currency, date_issue)
@@ -126,6 +138,15 @@ def validate_currency():
     return currency
 
 def validate_date(prompt, earliest_date=None):
+    """
+    Waliduje datę wprowadzoną przez użytkownika w formacie YYYY-MM-DD.
+    Parametry:
+    - prompt: Komunikat wyświetlany użytkownikowi, proszący o wprowadzenie daty.
+    - earliest_date (opcjonalny): Najwcześniejsza akceptowalna data.
+      Jeśli podana, data wprowadzona przez użytkownika nie może być wcześniejsza niż earliest_date.
+    Zwraca:
+    - date: Datę w formacie datetime.
+    """
     while True:
         date_str = input(prompt)
         try:
@@ -139,9 +160,14 @@ def validate_date(prompt, earliest_date=None):
         except ValueError:
             print("Nieprawidłowy format daty. Proszę wprowadzić datę w formacie YYYY-MM-DD.")
 
-# reszta kodu
 
-def validate_payment_value():
+
+def validate_payment_value(): 
+    """
+    Waliduje kwotę płatności wprowadzoną przez użytkownika.
+    Zwraca:
+    - payment_value: Kwotę płatności jako wartość float.
+    """
     while True:
         try:
             payment_value = float(input("Proszę podać kwotę płatności: "))
@@ -185,6 +211,20 @@ def get_invoice_data():
     return invoice_data
 
 def format_invoice_to_display(invoice):
+    """
+    Formatuje dane faktury do wyświetlenia.
+    
+    Argumenty:
+    - invoice: Słownik zawierający dane faktury.
+    
+    Zwraca:
+    - issue_rate: Kurs waluty na dzień wystawienia faktury.
+    - payment_dates_rates: Lista dat płatności wraz z kursami walut.
+    - differences: Lista różnic między kursami walut.
+    - payment_status: Status płatności (NADPŁATA, NIEDOPŁATA, OK).
+    - payment_status_value: Wartość statusu płatności.
+    - total_difference_str: Łączna różnica między kursami walut.
+    """
     total_payments, results = process_invoice(invoice)
     if results is None:
         print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
@@ -244,6 +284,16 @@ def print_error(msg):
     console.print(msg, style="bold red")
 
 def process_invoice(invoice_data):
+    """
+    Przetwarza dane faktury, oblicza różnice kursów walut i zwraca wyniki.
+
+    Argumenty:
+    - invoice_data: Słownik zawierający dane faktury.
+
+    Zwraca:
+    - total_payments: Suma płatności.
+    - results: Lista krotek zawierających wyniki dla każdej płatności.
+    """
     currency = invoice_data['currency']
     issue_date = invoice_data['issue_date']
     payments = invoice_data['payments']
@@ -270,6 +320,16 @@ def process_invoice(invoice_data):
     return total_payments, results  # Zwracamy sumę płatności oraz wyniki
 
 def validate_database(data, required_keys=['invoice_number', 'value', 'currency', 'issue_date', 'payments']):
+    """
+    Waliduje klucze w danych faktury.
+
+    Argumenty:
+    - data: Lista słowników zawierających dane faktur.
+    - required_keys: Lista kluczy wymaganych w danych faktury.
+
+    Zwraca:
+    - missing_keys: Lista kluczy brakujących w danych faktury.
+    """
     missing_keys = []
     for record in data:
         for key in required_keys:
