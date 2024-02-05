@@ -154,11 +154,11 @@ def validate_date(prompt, earliest_date=None):
             if earliest_date:
                 earliest_date = datetime.strptime(earliest_date, '%Y-%m-%d')
                 if date < earliest_date:
-                    print(f"Data nie może być wcześniejsza niż {earliest_date.strftime('%Y-%m-%d')}.")
+                    print_error(f"Data nie może być wcześniejsza niż {earliest_date.strftime('%Y-%m-%d')}.")
                     continue
             return date
         except ValueError:
-            print("Nieprawidłowy format daty. Proszę wprowadzić datę w formacie YYYY-MM-DD.")
+            print_error("Nieprawidłowy format daty. Proszę wprowadzić datę w formacie YYYY-MM-DD.")
 
 
 
@@ -172,11 +172,11 @@ def validate_payment_value():
         try:
             payment_value = float(input("Proszę podać kwotę płatności: "))
             if payment_value <= 0:
-                print("Kwota płatności musi być liczbą dodatnią. Proszę spróbować ponownie.")
+                print_error("Kwota płatności musi być liczbą dodatnią. Proszę spróbować ponownie.")
             else:
                 return payment_value
         except ValueError:
-            print("Nieprawidłowa wartość. Proszę wprowadzić liczbę.")
+            print_error("Nieprawidłowa wartość. Proszę wprowadzić liczbę.")
 
 def get_invoice_data():
     #Funkcja pobierająca dane faktury od użytkownika, zwraca słownik z danymi faktury.
@@ -204,12 +204,12 @@ def get_invoice_data():
 
         total_payments = sum(payment['value'] for payment in invoice_data['payments'])
         if total_payments > invoice_data['value']:
-            print("Uwaga: suma płatności przekracza wartość faktury.")
+            print_warning("Uwaga: suma płatności przekracza wartość faktury.")
             break
         elif total_payments == invoice_data['value']:
             break
         else:
-            print("Płatność jest mniejsza niż wartość faktury.")
+            print_warning("Płatność jest mniejsza niż wartość faktury.")
             should_continue = input("Czy chcesz wprowadzić kolejną płatność? (tak/nie): ")
             if should_continue.lower() != 'tak':
                 break
@@ -233,7 +233,7 @@ def format_invoice_to_display(invoice):
     """
     total_payments, results = process_invoice(invoice)
     if results is None:
-        print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
+        print_warning("Błąd przetwarzania faktury. Pominięto wynik.\n")
         return None
     total_difference = 0
     payment_dates_rates = []
@@ -288,6 +288,9 @@ def display_results(invoices):
 def print_error(msg):
     #Funkcja wyświetlająca komunikat o błędzie.
     console.print(msg, style="bold red")
+def print_warning(msg):
+    #Funkcja wyświetlająca komunikat o błędzie.
+    console.print(msg, style="bold orange")
 
 def process_invoice(invoice_data):
     """
