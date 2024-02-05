@@ -183,7 +183,13 @@ def get_invoice_data():
     invoice_data = {}
     invoice_data['payments'] = []
 
-    with open('data.json', 'r') as file:
+    filename = 'data.json'
+    if not os.path.exists(filename):
+        skeleton = []
+        with open(filename, 'w') as file:
+            json.dump(skeleton, file)
+
+    with open(filename, 'r') as file:
         existing_invoices = json.load(file)
 
     invoice_data['invoice_number'] = validate_invoice_number(existing_invoices)
