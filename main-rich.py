@@ -170,7 +170,39 @@ def get_invoice_data():
             print("Płatność jest mniejsza niż wartość faktury. Proszę podać datę i kwotę kolejnej płatności.")
 
     return invoice_data
-    
+
+def format_invoice_to_display(invoice):
+    total_payments, results = process_invoice(invoice)
+    if results is None:
+        print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
+        return None
+    total_difference = 0
+    payment_dates_rates = []
+    differences = []
+    for result in results:
+        issue_rate, payment_date, payment_rate, difference = result
+        payment_dates_rates.append(payment_date + " Kurs: " + str(payment_rate))
+        difference_str = str(round(difference, 2)) + " PLN"
+        total_difference += difference
+        if difference > 0:
+            difference_str = f"[red]{difference_str}[/red]"
+        else:
+            difference_str = f"[green]{difference_str}[/green]"
+        differences.append(difference_str)
+    payment_status_value = invoice['value'] - total_payments  # Obliczamy status płatności.
+    if payment_status_value < 0:
+        payment_status = "[blue]NADPŁATA[/blue]"
+    elif payment_status_value > 0:
+        payment_status = "[yellow]NIEDOPŁATA[/yellow]"
+    else:
+        payment_status = "[green][bold]OK[/bold][/green]"
+    total_difference_str = str(round(total_difference, 2)) + " PLN"
+    if total_difference > 0:
+        total_difference_str = f"[red]{total_difference_str}[/red]"
+    else:
+        total_difference_str = f"[green]{total_difference_str}[/green]"
+    return issue_rate, payment_dates_rates, differences, payment_status, payment_status_value, total_difference_str
+
 def display_results(invoices):
     #Funkcja wyświetlająca wyniki w tabeli.
     table = Table(show_header=True, header_style="bold magenta")
@@ -186,39 +218,14 @@ def display_results(invoices):
 
     for invoice in invoices:
         # Pętla przetwarzająca dane faktury i dodająca wyniki do tabeli.
-        total_payments, results = process_invoice(invoice)
-        if results is None:
-            print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
+        result = format_invoice_to_display(invoice)
+        if result is None:
             continue
-        total_difference = 0
-        payment_dates_rates = []
-        differences = []
-        for result in results:
-            issue_rate, payment_date, payment_rate, difference = result
-            payment_dates_rates.append(payment_date + " Kurs: " + str(payment_rate))
-            difference_str = str(round(difference, 2)) + " PLN"
-            total_difference += difference
-            if difference > 0:
-                difference_str = f"[red]{difference_str}[/red]"
-            else:
-                difference_str = f"[green]{difference_str}[/green]"
-            differences.append(difference_str)
-        payment_status_value = invoice['value'] - total_payments  # Obliczamy status płatności.
-        if payment_status_value < 0:
-            payment_status = "[blue]NADPŁATA[/blue]"
-        elif payment_status_value > 0:
-            payment_status = "[yellow]NIEDOPŁATA[/yellow]"
-        else:
-            payment_status = "[green][bold]OK[/bold][/green]"
-        total_difference_str = str(round(total_difference, 2)) + " PLN"
-        if total_difference > 0:
-            total_difference_str = f"[red]{total_difference_str}[/red]"
-        else:
-            total_difference_str = f"[green]{total_difference_str}[/green]"
+        issue_rate, payment_dates_rates, differences, payment_status, payment_status_value, total_difference_str = result
         table.add_row(str(invoice['invoice_number']), invoice['currency'], str(invoice['value']), str(issue_rate), '\n'.join(payment_dates_rates), '\n'.join(differences), payment_status, str(payment_status_value), total_difference_str)
         table.add_row("-", "-", "-", "-", "-", "-", "-", "-", "-")  # Dodajemy pusty wiersz jako separator.
     console.print(table)
-
+    
 def print_error(msg):
     #Funkcja wyświetlająca komunikat o błędzie.
     console.print(msg, style="bold red")
@@ -270,7 +277,10 @@ def run_interactive_mode():
                 save_invoice_data(invoice_data)
                 display_results([invoice_data]) 
                 break
-        continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
+            elif correct_input.lower() == 'n':
+                continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
+                if continue_input.lower() != 't':
+                    break
         if continue_input.lower() != 't':
             break
 
