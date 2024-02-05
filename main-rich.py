@@ -131,9 +131,21 @@ def validate_date(prompt_message, earliest_date=None):
         except ValueError:
             date_str = Prompt.ask("Nieprawidłowa data. Wprowadź ponownie: ")
 
+def validate_payment_value():
+    while True:
+        try:
+            payment_value = float(input("Proszę podać kwotę płatności: "))
+            if payment_value <= 0:
+                print("Kwota płatności musi być liczbą dodatnią. Proszę spróbować ponownie.")
+            else:
+                return payment_value
+        except ValueError:
+            print("Nieprawidłowa wartość. Proszę wprowadzić liczbę.")
+
 def get_invoice_data():
     #Funkcja pobierająca dane faktury od użytkownika, zwraca słownik z danymi faktury.
     invoice_data = {}
+    invoice_data['payments'] = []
 
     with open('data.json', 'r') as file:
         existing_invoices = json.load(file)
@@ -142,7 +154,20 @@ def get_invoice_data():
     invoice_data['value'] = validate_value()
     invoice_data['currency'] = validate_currency()
     invoice_data['issue_date'] = validate_date("Data wystawienia (YYYY-MM-DD): ")
-    invoice_data['payment_date'] = validate_date("Data zapłaty (YYYY-MM-DD): ", datetime.strptime(invoice_data['issue_date'], '%Y-%m-%d'))
+
+    while True:
+        payment_value = validate_payment_value()
+        payment_date = validate_date("Data płatności (YYYY-MM-DD): ")
+        invoice_data['payments'].append({'date': payment_date, 'value': payment_value})
+
+        total_payments = sum(payment['value'] for payment in invoice_data['payments'])
+        if total_payments > invoice_data['value']:
+            print("Uwaga: suma płatności przekracza wartość faktury.")
+            break
+        elif total_payments == invoice_data['value']:
+            break
+        else:
+            print("Płatność jest mniejsza niż wartość faktury. Proszę podać datę i kwotę kolejnej płatności.")
 
     return invoice_data
     
@@ -150,22 +175,48 @@ def display_results(invoices):
     #Funkcja wyświetlająca wyniki w tabeli.
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Numer faktury")
-    table.add_column("Kurs waluty w dniu wystawienia faktury")
-    table.add_column("Kurs waluty w dniu płatności")
-    table.add_column("Różnica kursowa wynosi")
+    table.add_column("Waluta")
+    table.add_column("Wartość")
+    table.add_column("Kurs w dniu\nwystawienia")
+    table.add_column("Data i kurs waluty\nw dniu płatności")
+    table.add_column("Różnica kursowa:")
+    table.add_column("Status")
+    table.add_column("Nadpłata/\nNiedopłata")
+    table.add_column("Suma różnic\n kursowych")
 
     for invoice in invoices:
-        #Pętla przetwarzająca dane faktury i dodająca wyniki do tabeli.
-        issue_rate, payment_rate, difference = process_invoice(invoice)
-        if issue_rate is not None and payment_rate is not None and difference is not None:
+        # Pętla przetwarzająca dane faktury i dodająca wyniki do tabeli.
+        total_payments, results = process_invoice(invoice)
+        if results is None:
+            print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
+            continue
+        total_difference = 0
+        payment_dates_rates = []
+        differences = []
+        for result in results:
+            issue_rate, payment_date, payment_rate, difference = result
+            payment_dates_rates.append(payment_date + " Kurs: " + str(payment_rate))
             difference_str = str(round(difference, 2)) + " PLN"
+            total_difference += difference
             if difference > 0:
                 difference_str = f"[red]{difference_str}[/red]"
             else:
                 difference_str = f"[green]{difference_str}[/green]"
-            table.add_row(str(invoice['invoice_number']), str(issue_rate), str(payment_rate), difference_str)
+            differences.append(difference_str)
+        payment_status_value = invoice['value'] - total_payments  # Obliczamy status płatności.
+        if payment_status_value < 0:
+            payment_status = "[blue]NADPŁATA[/blue]"
+        elif payment_status_value > 0:
+            payment_status = "[yellow]NIEDOPŁATA[/yellow]"
         else:
-            print_error("Błąd przetwarzania faktury. Pominięto wynik.\n")
+            payment_status = "[green][bold]OK[/bold][/green]"
+        total_difference_str = str(round(total_difference, 2)) + " PLN"
+        if total_difference > 0:
+            total_difference_str = f"[red]{total_difference_str}[/red]"
+        else:
+            total_difference_str = f"[green]{total_difference_str}[/green]"
+        table.add_row(str(invoice['invoice_number']), invoice['currency'], str(invoice['value']), str(issue_rate), '\n'.join(payment_dates_rates), '\n'.join(differences), payment_status, str(payment_status_value), total_difference_str)
+        table.add_row("-", "-", "-", "-", "-", "-", "-", "-", "-")  # Dodajemy pusty wiersz jako separator.
     console.print(table)
 
 def print_error(msg):
@@ -173,23 +224,32 @@ def print_error(msg):
     console.print(msg, style="bold red")
 
 def process_invoice(invoice_data):
-    #Funkcja przetwarzająca dane faktury, zwraca kursy walut w dniu wystawienia i płatności faktury oraz różnicę kursową.
     currency = invoice_data['currency']
     issue_date = invoice_data['issue_date']
-    payment_date = invoice_data['payment_date']
+    payments = invoice_data['payments']
     value = invoice_data['value']
+
+    results = []
+    total_payments = 0  # Dodajemy zmienną do przechowywania sumy płatności
+
     try:
-        issue_rate, payment_rate = get_exchange_rate(currency, issue_date, payment_date)
-        if issue_rate is None or payment_rate is None:
-            print_error("Nie udało się pobrać kursów walut. Spróbuj ponownie.\n")
-            return None, None, None
-        difference = calculate_exchange_rate_difference(value, currency, issue_date, payment_date)
-        return issue_rate, payment_rate, difference
+        for payment in payments:
+            payment_date = payment['date']
+            payment_value = payment['value']
+            total_payments += payment_value  # Aktualizujemy sumę płatności
+            issue_rate, payment_rate = get_exchange_rate(currency, issue_date, payment_date)
+            if issue_rate is None or payment_rate is None:
+                print_error("Nie udało się pobrać kursów walut. Spróbuj ponownie.\n")
+                return None
+            difference = calculate_exchange_rate_difference(payment_value, currency, issue_date, payment_date)
+            results.append((issue_rate, payment_date, payment_rate, difference))
     except Exception as e:
         print_error(f"Wystąpił błąd: {e}")
-        return None, None, None  
+        return None
 
-def validate_database(data, required_keys=['invoice_number', 'value', 'currency', 'issue_date', 'payment_date']):
+    return total_payments, results  # Zwracamy sumę płatności oraz wyniki
+
+def validate_database(data, required_keys=['invoice_number', 'value', 'currency', 'issue_date', 'payments']):
     missing_keys = []
     for record in data:
         for key in required_keys:
@@ -210,7 +270,7 @@ def run_interactive_mode():
                 save_invoice_data(invoice_data)
                 display_results([invoice_data]) 
                 break
-        continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną płatność? (t/n) ")
+        continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
         if continue_input.lower() != 't':
             break
 
