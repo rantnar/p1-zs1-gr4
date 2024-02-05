@@ -119,17 +119,21 @@ def validate_currency():
         currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN. Wprowadź ponownie: ")
     return currency
 
-def validate_date(prompt_message, earliest_date=None):
-    #Funkcja walidująca datę, zwraca poprawną datę.
-    date_str = Prompt.ask(prompt_message)
+def validate_date(prompt, earliest_date=None):
     while True:
+        date_str = input(prompt)
         try:
             date = datetime.strptime(date_str, '%Y-%m-%d')
-            if earliest_date and date < earliest_date:
-                raise ValueError
-            return date_str
+            if earliest_date:
+                earliest_date = datetime.strptime(earliest_date, '%Y-%m-%d')
+                if date < earliest_date:
+                    print(f"Data nie może być wcześniejsza niż {earliest_date.strftime('%Y-%m-%d')}.")
+                    continue
+            return date
         except ValueError:
-            date_str = Prompt.ask("Nieprawidłowa data. Wprowadź ponownie: ")
+            print("Nieprawidłowy format daty. Proszę wprowadzić datę w formacie YYYY-MM-DD.")
+
+# reszta kodu
 
 def validate_payment_value():
     while True:
@@ -153,11 +157,11 @@ def get_invoice_data():
     invoice_data['invoice_number'] = validate_invoice_number(existing_invoices)
     invoice_data['value'] = validate_value()
     invoice_data['currency'] = validate_currency()
-    invoice_data['issue_date'] = validate_date("Data wystawienia (YYYY-MM-DD): ")
+    invoice_data['issue_date'] = validate_date("Data wystawienia (YYYY-MM-DD): ").strftime('%Y-%m-%d')
 
     while True:
         payment_value = validate_payment_value()
-        payment_date = validate_date("Data płatności (YYYY-MM-DD): ")
+        payment_date = validate_date("Data płatności (YYYY-MM-DD): ", earliest_date=invoice_data['issue_date']).strftime('%Y-%m-%d')
         invoice_data['payments'].append({'date': payment_date, 'value': payment_value})
 
         total_payments = sum(payment['value'] for payment in invoice_data['payments'])
@@ -273,6 +277,7 @@ def run_interactive_mode():
             continue
         while True:
             correct_input = Prompt.ask("Czy poprawnie wprowadziłeś dane? (t/n) ")
+            continue_input = ''
             if correct_input.lower() == 't':
                 save_invoice_data(invoice_data)
                 display_results([invoice_data]) 
