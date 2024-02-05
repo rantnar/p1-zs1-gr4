@@ -12,7 +12,17 @@ from rich.table import Table
 #Inicializacja konsoli
 console = Console()
 
-def get_exchange_rate_for_date(currency, date):
+def get_cached_data(currency, date):
+    try:
+        with open('cache.json', 'r') as file:
+            data = json.load(file)
+            if currency in data and date in data[currency]:
+                return data[currency][date]
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    return None
+
+def get_data_from_api(currency, date):
     try:
         response = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/?format=json")
         response.raise_for_status()
@@ -27,6 +37,30 @@ def get_exchange_rate_for_date(currency, date):
 
     data = response.json()
     return data["rates"][0]["mid"]
+
+def save_data_to_cache(currency, date, rate):
+    try:
+        with open('cache.json', 'r') as file:
+            cache_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        cache_data = {}
+
+    if currency not in cache_data:
+        cache_data[currency] = {}
+    cache_data[currency][date] = rate
+
+    with open('cache.json', 'w') as file:
+        json.dump(cache_data, file)
+
+def get_exchange_rate_for_date(currency, date):
+    cached_data = get_cached_data(currency, date)
+    if cached_data is not None:
+        return cached_data
+
+    rate = get_data_from_api(currency, date)
+    save_data_to_cache(currency, date, rate)
+
+    return rate
 
 def get_exchange_rate(currency, date_issue, date_payment):
     if currency.upper() == 'PLN':
@@ -59,12 +93,14 @@ def save_invoice_data(invoice_data, file_path='data.json'):
         json.dump(data, file)
 
 def validate_invoice_number(existing_invoices):
+    #Funkcja walidująca numer faktury, zwraca poprawny numer faktury.
     invoice_number = Prompt.ask("Nr. faktury: ")
     while not re.match(r"^[a-zA-Z0-9-/]+$", invoice_number) or any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices):
         invoice_number = Prompt.ask("Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: ")
     return invoice_number
 
 def validate_value():
+    #Funkcja walidująca wartość faktury, zwraca poprawną wartość faktury.
     value = Prompt.ask("Wartość faktury: ")
     while True:
         try:
@@ -73,12 +109,14 @@ def validate_value():
             value = Prompt.ask("Nieprawidłowa wartość faktury. Wprowadź ponownie: ")
 
 def validate_currency():
+    #Funkcja walidująca walutę, zwraca poprawną walutę.
     currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ")
     while currency not in ['EUR', 'USD', 'GBP', 'PLN']:
         currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN. Wprowadź ponownie: ")
     return currency
 
 def validate_date(prompt_message, earliest_date=None):
+    #Funkcja walidująca datę, zwraca poprawną datę.
     date_str = Prompt.ask(prompt_message)
     while True:
         try:
@@ -90,6 +128,7 @@ def validate_date(prompt_message, earliest_date=None):
             date_str = Prompt.ask("Nieprawidłowa data. Wprowadź ponownie: ")
 
 def get_invoice_data():
+    #Funkcja pobierająca dane faktury od użytkownika, zwraca słownik z danymi faktury.
     invoice_data = {}
 
     with open('data.json', 'r') as file:
@@ -221,3 +260,4 @@ if __name__ == '__main__':
     except Exception:
         console.print("Wystąpił błąd:")
         console.print(traceback.format_exc())
+
