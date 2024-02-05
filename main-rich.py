@@ -8,6 +8,7 @@ import traceback
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
+import os
 #Inicializacja konsoli
 console = Console()
 
@@ -96,6 +97,11 @@ def save_invoice_data(invoice_data, file_path='data.json'):
     with open(file_path, 'w') as file:
         json.dump(data, file)
 
+def save_single_invoice_to_file(invoice_data):
+    #Funkcja zapisująca dane faktury do pojedynczego pliku JSON.
+        with open(f'data/{invoice_data["invoice_number"]}.json', 'w') as file:
+            json.dump(invoice_data, file)
+
 def validate_invoice_number(existing_invoices):
     #Funkcja walidująca numer faktury, zwraca poprawny numer faktury.
     invoice_number = Prompt.ask("Nr. faktury: ")
@@ -104,7 +110,7 @@ def validate_invoice_number(existing_invoices):
     return invoice_number
 
 def validate_value():
-    #Funkcja walidująca wartość faktury, zwraca poprawną wartość faktury.
+    #Funkcja walidująca wartość faktury, zwraca poprawną wartość ftaktury.
     value = Prompt.ask("Wartość faktury: ")
     while True:
         try:
@@ -280,15 +286,16 @@ def run_interactive_mode():
             continue
         while True:
             correct_input = Prompt.ask("Czy poprawnie wprowadziłeś dane? (t/n) ")
-            continue_input = ''
             if correct_input.lower() == 't':
                 save_invoice_data(invoice_data)
                 display_results([invoice_data]) 
+                save_to_file_input = Prompt.ask("Czy chcesz zapisać fakturę do pojedynczego pliku? (t/n) ")
+                if save_to_file_input.lower() == 't':
+                    save_single_invoice_to_file(invoice_data)
                 break
             elif correct_input.lower() == 'n':
-                continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
-                if continue_input.lower() != 't':
-                    break
+                break
+        continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
         if continue_input.lower() != 't':
             break
 
