@@ -171,7 +171,10 @@ def get_invoice_data():
         elif total_payments == invoice_data['value']:
             break
         else:
-            print("Płatność jest mniejsza niż wartość faktury. Proszę podać datę i kwotę kolejnej płatności.")
+            print("Płatność jest mniejsza niż wartość faktury.")
+            should_continue = input("Czy chcesz wprowadzić kolejną płatność? (tak/nie): ")
+            if should_continue.lower() != 'tak':
+                break
 
     return invoice_data
 
