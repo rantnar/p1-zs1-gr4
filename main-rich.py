@@ -12,7 +12,17 @@ from rich.table import Table
 #Inicializacja konsoli
 console = Console()
 
-def get_exchange_rate_for_date(currency, date):
+def get_cached_data(currency, date):
+    try:
+        with open('cache.json', 'r') as file:
+            data = json.load(file)
+            if currency in data and date in data[currency]:
+                return data[currency][date]
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    return None
+
+def get_data_from_api(currency, date):
     try:
         response = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/?format=json")
         response.raise_for_status()
@@ -27,6 +37,30 @@ def get_exchange_rate_for_date(currency, date):
 
     data = response.json()
     return data["rates"][0]["mid"]
+
+def save_data_to_cache(currency, date, rate):
+    try:
+        with open('cache.json', 'r') as file:
+            cache_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        cache_data = {}
+
+    if currency not in cache_data:
+        cache_data[currency] = {}
+    cache_data[currency][date] = rate
+
+    with open('cache.json', 'w') as file:
+        json.dump(cache_data, file)
+
+def get_exchange_rate_for_date(currency, date):
+    cached_data = get_cached_data(currency, date)
+    if cached_data is not None:
+        return cached_data
+
+    rate = get_data_from_api(currency, date)
+    save_data_to_cache(currency, date, rate)
+
+    return rate
 
 def get_exchange_rate(currency, date_issue, date_payment):
     if currency.upper() == 'PLN':
@@ -209,3 +243,4 @@ if __name__ == '__main__':
     except Exception:
         console.print("Wystąpił błąd:")
         console.print(traceback.format_exc())
+
