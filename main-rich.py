@@ -144,7 +144,16 @@ def process_invoice(invoice_data):
         return issue_rate, payment_rate, difference
     except Exception as e:
         print_error(f"Wystąpił błąd: {e}")
-        return None, None, None   
+        return None, None, None  
+
+def validate_database(data, required_keys=['invoice_number', 'value', 'currency', 'issue_date', 'payment_date']):
+    missing_keys = []
+    for record in data:
+        for key in required_keys:
+            if key not in record:
+                missing_keys.append(key)
+    return missing_keys
+
 
 def run_interactive_mode():
     #Funkcja uruchamiająca tryb interaktywny.
@@ -170,6 +179,14 @@ def run_batch_mode():
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 data = json.load(file)
+
+                # Walidacja kluczy
+                missing_keys = validate_database(data)
+                if missing_keys:
+                    print_error(f"Plik {file_path} nie zawiera wymaganych kluczy: {', '.join(missing_keys)} Spróbuj ponownie.")
+                    continue
+
+                # Jeśli brak błędów, wyświetl wyniki i przerwij pętlę
                 display_results(data)
                 break  # Przerywa pętlę, jeśli plik został wczytany poprawnie
         except FileNotFoundError:
