@@ -1,9 +1,8 @@
 #Importy bibliotek
 import requests
 import json
-# from questionary import Prompt, print_error
-# from questionary import console
 from datetime import datetime
+from datetime import timedelta
 import re
 import traceback
 from rich.console import Console
@@ -23,20 +22,25 @@ def get_cached_data(currency, date):
     return None
 
 def get_data_from_api(currency, date):
-    try:
-        response = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{date}/?format=json")
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as errh:
-        raise Exception("Błąd HTTP: {}. Brak danych dla podanej daty.".format(errh))
-    except requests.exceptions.ConnectionError as errc:
-        raise Exception("Error Connecting:",errc)
-    except requests.exceptions.Timeout as errt:
-        raise Exception("Timeout Error:",errt)
-    except requests.exceptions.RequestException as err:
-        raise Exception("Something went wrong",err)
-
-    data = response.json()
-    return data["rates"][0]["mid"]
+    date = datetime.strptime(date, "%Y-%m-%d")
+    attempts = 0
+    while attempts < 7:
+        try:
+            formatted_date = date.strftime("%Y-%m-%d")
+            response = requests.get(f"http://api.nbp.pl/api/exchangerates/rates/a/{currency}/{formatted_date}/?format=json")
+            response.raise_for_status()
+            data = response.json()
+            return data["rates"][0]["mid"]
+        except requests.exceptions.HTTPError:
+            date -= timedelta(days=1)
+            attempts += 1
+        except requests.exceptions.ConnectionError as errc:
+            raise Exception("Error Connecting:",errc)
+        except requests.exceptions.Timeout as errt:
+            raise Exception("Timeout Error:",errt)
+        except requests.exceptions.RequestException as err:
+            raise Exception("Something went wrong",err)
+    raise Exception("Błąd HTTP: Brak danych dla podanej daty i 6 poprzednich dni.")
 
 def save_data_to_cache(currency, date, rate):
     try:
