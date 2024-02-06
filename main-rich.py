@@ -402,20 +402,25 @@ def run_batch_mode():
     console.input("Naciśnij Enter, aby kontynuować...\n")
     
 def main():
-    #Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
-    console.print("Witaj w programie do obliczania różnic kursowych!\n")
-    console.print("Wybierz tryb pracy:\n")
-    console.print("1. Tryb interaktywny\n")
-    console.print("2. Tryb wsadowy\n")
+    try:
+        #Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
+        console.print("Witaj w programie do obliczania różnic kursowych!\n")
+        console.print("Wybierz tryb pracy:\n")
+        console.print("1. Tryb interaktywny\n")
+        console.print("2. Tryb wsadowy\n")
 
-    mode = Prompt.ask("Wybór: ")
-    while mode not in ["1", "2"]:
-        mode = Prompt.ask("Nieprawidłowy wybór. Wprowadź ponownie: ")
+        mode = Prompt.ask("Wybór: ")
+        while mode not in ["1", "2"]:
+            mode = Prompt.ask("Nieprawidłowy wybór. Wprowadź ponownie: ")
 
-    if mode == "1":
-        run_interactive_mode()
-    elif mode == "2":
-        run_batch_mode()
+        if mode == "1":
+            run_interactive_mode()
+        elif mode == "2":
+            run_batch_mode()
+    except KeyboardInterrupt:
+        console.print("\nProgram zakończony przez użytkownika.")
+        exit(0)
+        
 
 if __name__ == '__main__':
     #Wywołanie funkcji głównej programu.
