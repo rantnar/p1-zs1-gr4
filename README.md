@@ -22,7 +22,8 @@ python main-rich.py
 W tej chwili z programu wychodzimy zamykając terminal, albo wysyłając sygnał SIGINT ```CTRL+C```
 
 ### Szkielet pliku JSON, który reprezentuje fakturę
-```json{
+```json
+{
   "invoice_number": "string",
   "value": "number",
   "currency": "string",
