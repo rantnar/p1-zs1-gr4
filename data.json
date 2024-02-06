@@ -1,1 +1,1 @@
-[{"payments": [{"date": "2024-02-01", "value": 100.0}], "invoice_number": "1", "value": 100.0, "currency": "USD", "issue_date": "2024-01-01"}]
+[{"payments": [{"date": "2024-02-01", "value": 100.0}], "invoice_number": "1", "value": 100.0, "currency": "USD", "issue_date": "2024-01-01"}, {"payments": [{"date": "2024-02-03", "value": 1500.0}, {"date": "2024-02-06", "value": 500.0}], "invoice_number": "2", "value": 2000.0, "currency": "USD", "issue_date": "2024-01-05"}]

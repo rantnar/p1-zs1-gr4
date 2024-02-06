@@ -110,9 +110,9 @@ def save_invoice_data(invoice_data, file_path='data.json'):
         json.dump(data, file)
 
 def save_single_invoice_to_file(invoice_data):
-    #Funkcja zapisująca dane faktury do pojedynczego pliku JSON.
-        with open(f'data/{invoice_data["invoice_number"]}.json', 'w') as file:
-            json.dump(invoice_data, file)
+    # Funkcja zapisująca dane faktury do pojedynczego pliku JSON.
+    with open(f'data/{invoice_data["invoice_number"]}.json', 'w') as file:
+        json.dump([invoice_data], file)
 
 def validate_invoice_number(existing_invoices):
     #Funkcja walidująca numer faktury, zwraca poprawny numer faktury.
@@ -210,8 +210,8 @@ def get_invoice_data():
             break
         else:
             print_warning("Płatność jest mniejsza niż wartość faktury.")
-            should_continue = input("Czy chcesz wprowadzić kolejną płatność? (tak/nie): ")
-            if should_continue.lower() != 'tak':
+            should_continue = input("Czy chcesz wprowadzić kolejną płatność? (t/n): ")
+            if should_continue.lower() != 't':
                 break
 
     return invoice_data
@@ -290,7 +290,7 @@ def print_error(msg):
     console.print(msg, style="bold red")
 def print_warning(msg):
     #Funkcja wyświetlająca komunikat o błędzie.
-    console.print(msg, style="bold orange")
+    console.print(msg, style="bold yellow")
 
 def process_invoice(invoice_data):
     """

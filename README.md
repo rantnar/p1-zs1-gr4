@@ -23,7 +23,7 @@ W tej chwili z programu wychodzimy zamykając terminal, albo wysyłając sygnał
 
 ### Szkielet pliku JSON, który reprezentuje fakturę
 ```json
-{
+[{
   "invoice_number": "string",
   "value": "number",
   "currency": "string",
@@ -35,6 +35,6 @@ W tej chwili z programu wychodzimy zamykając terminal, albo wysyłając sygnał
     }
     // Może być więcej obiektów płatności
   ]
-}
+}]
 ```
 ### Użytkownicy windows muszą upewnić się, że mają zainstalowany pip, oraz znajduje się on w PATH. Rozwiązaniem może być instalacja python wprost z Microsoft Store.
