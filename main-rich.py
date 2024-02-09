@@ -13,7 +13,14 @@ import sys
 
 #użycie -h lub --help
 if '-h' in sys.argv or '--help' in sys.argv:
-    print('Tutaj wpisz instrukcję obsługi Twojego programu.')
+    print("Witaj, to jest program pomocniczy.")
+    print("Oto intrukcje:")
+    print("1. Wprowadź dane, gdy zostaniesz o to poproszony.")
+    print("2. Postępuj zgodnie z wyświetlanymi komunikatami.")
+    print("3. Program zamyka się przy użyciu skrótu ctrl+c")
+    print("4. Pliki pojedynczych faktur są przechowywane w folderze data/nr faktury.json")
+    print("5. Główna baza danych to plik data.json")
+    print("6. W razie problemów z uruchomieniem proszę przeczytać plik README.md")
     sys.exit()
 
 #Inicjalizacja konsoli
