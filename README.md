@@ -1,3 +1,4 @@
+123
 # p1-zs1-gr4 - Obliczanie różnic kursowych.
 
 ## Wymagania
