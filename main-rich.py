@@ -9,6 +9,13 @@ from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
 import os
+import sys
+
+#użycie -h lub --help
+if '-h' in sys.argv or '--help' in sys.argv:
+    print('Tutaj wpisz instrukcję obsługi Twojego programu.')
+    sys.exit()
+
 #Inicjalizacja konsoli
 console = Console()
 
