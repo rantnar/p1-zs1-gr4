@@ -422,15 +422,19 @@ def main():
         console.print("Wybierz tryb pracy:\n")
         console.print("1. Tryb interaktywny\n")
         console.print("2. Tryb wsadowy\n")
+        console.print("3. Wyjście\n")
 
         mode = Prompt.ask("Wybór: ")
-        while mode not in ["1", "2"]:
+        while mode not in ["1", "2", "3"]:
             mode = Prompt.ask("Nieprawidłowy wybór. Wprowadź ponownie: ")
 
         if mode == "1":
             run_interactive_mode()
         elif mode == "2":
             run_batch_mode()
+        elif mode == "3":
+            console.print("Wychodzę z programu.")
+            exit(0)
     except KeyboardInterrupt:
         console.print("\nProgram zakończony przez użytkownika.")
         exit(0)
