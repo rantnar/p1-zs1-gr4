@@ -1,4 +1,4 @@
-#Importy bibliotek
+# Importy bibliotek
 import requests
 import json
 from datetime import datetime
@@ -11,23 +11,27 @@ from rich.table import Table
 import os
 import sys
 
-#użycie -h lub --help
+# użycie -h lub --help
 if '-h' in sys.argv or '--help' in sys.argv:
     print("Witaj, to jest program pomocniczy.")
     print("Oto intrukcje:")
     print("1. Wprowadź dane, gdy zostaniesz o to poproszony.")
     print("2. Postępuj zgodnie z wyświetlanymi komunikatami.")
     print("3. Program zamyka się przy użyciu skrótu ctrl+c")
-    print("4. Pliki pojedynczych faktur są przechowywane w folderze data/nr faktury.json")
+    print("4. Pliki pojedynczych faktur są przechowywane w folderze "
+          "data/nr faktury.json")
     print("5. Główna baza danych to plik data.json")
-    print("6. W razie problemów z uruchomieniem proszę przeczytać plik README.md")
+    print("6. W razie problemów z uruchomieniem proszę "
+          "przeczytać plik README.md")
     sys.exit()
 
-#Inicjalizacja konsoli
+# Inicjalizacja konsoli
 console = Console()
 
+
 def get_cached_data(currency, date):
-    #Odczytuje dane z pliku 'cache.json' dla danej waluty i daty, zwracając je, jeśli istnieją.
+    # Odczytuje dane z pliku 'cache.json' dla danej waluty
+    # i daty, zwracając je, jeśli istnieją.
 
     try:
         with open('cache.json', 'r') as file:
@@ -38,8 +42,10 @@ def get_cached_data(currency, date):
         pass
     return None
 
+
 def get_data_from_api(currency, date):
-    #Pobiera dane z API NBP dla podanej waluty i daty, próbując do 7 dni wstecz, zwracając kurs średni waluty z danego dnia.
+    # Pobiera dane z API NBP dla podanej waluty i daty, próbując do 7 dni wstecz,
+    # zwracając kurs średni waluty z danego dnia.
 
     date = datetime.strptime(date, "%Y-%m-%d")
     attempts = 0
@@ -54,15 +60,16 @@ def get_data_from_api(currency, date):
             date -= timedelta(days=1)
             attempts += 1
         except requests.exceptions.ConnectionError as errc:
-            raise Exception("Error Connecting:",errc)
+            raise Exception("Error Connecting:", errc)
         except requests.exceptions.Timeout as errt:
-            raise Exception("Timeout Error:",errt)
+            raise Exception("Timeout Error:", errt)
         except requests.exceptions.RequestException as err:
-            raise Exception("Something went wrong",err)
+            raise Exception("Something went wrong", err)
     raise Exception("Błąd HTTP: Brak danych dla podanej daty i 6 poprzednich dni.")
 
+
 def save_data_to_cache(currency, date, rate):
-    #Zapisuje dane do pamięci podręcznej (cache) w pliku JSON dla podanej waluty, daty i kursu.
+    # Zapisuje dane do pamięci podręcznej (cache) w pliku JSON dla podanej waluty, daty i kursu.
 
     try:
         with open('cache.json', 'r') as file:
@@ -77,8 +84,10 @@ def save_data_to_cache(currency, date, rate):
     with open('cache.json', 'w') as file:
         json.dump(cache_data, file)
 
+
 def get_exchange_rate_for_date(currency, date):
-    #Pobiera kurs wymiany waluty dla podanej daty z pamięci podręcznej lub z API, a następnie zapisuje go do pamięci podręcznej.
+    # Pobiera kurs wymiany waluty dla podanej daty z pamięci
+    # podręcznej lub z API, a następnie zapisuje go do pamięci podręcznej.
 
     cached_data = get_cached_data(currency, date)
     if cached_data is not None:
@@ -89,31 +98,39 @@ def get_exchange_rate_for_date(currency, date):
 
     return rate
 
+
 def get_exchange_rate(currency, date_issue, date_payment):
-    #Pobiera kurs wymiany waluty dla podanych dat daty emisji i daty płatności.
-    #Jeśli waluta to PLN, zwraca kursy 1:1.
-    #W przeciwnym razie pobiera kursy dla daty emisji i daty płatności.
+    # Pobiera kurs wymiany waluty dla podanych dat daty
+    # emisji i daty płatności.
+    # Jeśli waluta to PLN, zwraca kursy 1:1.
+    # W przeciwnym razie pobiera kursy dla daty emisji i daty płatności.
 
     if currency.upper() == 'PLN':
         return 1, 1
     issue_rate = get_exchange_rate_for_date(currency, date_issue)
-    payment_rate = issue_rate if date_issue == date_payment else get_exchange_rate_for_date(currency, date_payment)
+    payment_rate = (issue_rate if date_issue == date_payment
+                    else get_exchange_rate_for_date(currency, date_payment))
     return issue_rate, payment_rate
 
-def calculate_exchange_rate_difference(invoice_amount, currency, date_issue, date_payment):
-    #Funkcja obliczająca różnicę kursową na podstawie podanych parametrów, zwraza różnicę kursową.
+
+def calculate_exchange_rate_difference(invoice_amount, currency,
+                                       date_issue, date_payment):
+    # Funkcja obliczająca różnicę kursową na podstawie
+    # podanych parametrów, zwraza różnicę kursową.
 
     issue_rate, payment_rate = get_exchange_rate(currency, date_issue, date_payment)
 
-    #Zmienna invoice_amount jest typu string, konwersja na float jest wymagana do poprawnego działania funkcji.
+    # Zmienna invoice_amount jest typu string,
+    # konwersja na float jest wymagana do poprawnego działania funkcji.
     invoice_amount = float(invoice_amount)
-    
+
     amount_in_pln_issue = invoice_amount * issue_rate
     amount_in_pln_payment = invoice_amount * payment_rate
     return amount_in_pln_payment - amount_in_pln_issue
 
+
 def save_invoice_data(invoice_data, file_path='data.json'):
-    #Funkcja zapisująca dane faktury do pliku JSON.
+    # Funkcja zapisująca dane faktury do pliku JSON.
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -123,20 +140,28 @@ def save_invoice_data(invoice_data, file_path='data.json'):
     with open(file_path, 'w') as file:
         json.dump(data, file)
 
+
 def save_single_invoice_to_file(invoice_data):
     # Funkcja zapisująca dane faktury do pojedynczego pliku JSON.
     with open(f'data/{invoice_data["invoice_number"]}.json', 'w') as file:
         json.dump([invoice_data], file)
 
+
 def validate_invoice_number(existing_invoices):
-    #Funkcja walidująca numer faktury, zwraca poprawny numer faktury.
+    # Funkcja walidująca numer faktury, zwraca poprawny numer faktury.
     invoice_number = Prompt.ask("Nr. faktury: ")
-    while not re.match(r"^[a-zA-Z0-9-/]+$", invoice_number) or any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices):
-        invoice_number = Prompt.ask("Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: ")
+    while (
+        not re.match(r"^[a-zA-Z0-9-/]+$", invoice_number) or
+        any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices)
+    ):
+        invoice_number = Prompt.ask(
+            "Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: "
+        )
     return invoice_number
 
+
 def validate_value():
-    #Funkcja walidująca wartość faktury, zwraca poprawną wartość ftaktury.
+    # Funkcja walidująca wartość faktury, zwraca poprawną wartość ftaktury.
     value = Prompt.ask("Wartość faktury: ")
     while True:
         try:
@@ -144,12 +169,15 @@ def validate_value():
         except ValueError:
             value = Prompt.ask("Nieprawidłowa wartość faktury. Wprowadź ponownie: ")
 
+
 def validate_currency():
-    #Funkcja walidująca walutę, zwraca poprawną walutę.
+    # Funkcja walidująca walutę, zwraca poprawną walutę.
     currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ")
     while currency not in ['EUR', 'USD', 'GBP', 'PLN']:
-        currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN. Wprowadź ponownie: ")
+        currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to "
+                              "EUR, USD, GBP i PLN. Wprowadź ponownie: ")
     return currency
+
 
 def validate_date(prompt, earliest_date=None):
     """
@@ -157,7 +185,8 @@ def validate_date(prompt, earliest_date=None):
     Parametry:
     - prompt: Komunikat wyświetlany użytkownikowi, proszący o wprowadzenie daty.
     - earliest_date (opcjonalny): Najwcześniejsza akceptowalna data.
-      Jeśli podana, data wprowadzona przez użytkownika nie może być wcześniejsza niż earliest_date.
+      Jeśli podana, data wprowadzona przez użytkownika nie może być
+      wcześniejsza niż earliest_date.
     Zwraca:
     - date: Datę w formacie datetime.
     """
@@ -175,8 +204,7 @@ def validate_date(prompt, earliest_date=None):
             print_error("Nieprawidłowy format daty. Proszę wprowadzić datę w formacie YYYY-MM-DD.")
 
 
-
-def validate_payment_value(): 
+def validate_payment_value():
     """
     Waliduje kwotę płatności wprowadzoną przez użytkownika.
     Zwraca:
@@ -192,8 +220,9 @@ def validate_payment_value():
         except ValueError:
             print_error("Nieprawidłowa wartość. Proszę wprowadzić liczbę.")
 
+
 def get_invoice_data():
-    #Funkcja pobierająca dane faktury od użytkownika, zwraca słownik z danymi faktury.
+    # Funkcja pobierająca dane faktury od użytkownika, zwraca słownik z danymi faktury.
     invoice_data = {}
     invoice_data['payments'] = []
 
@@ -230,13 +259,14 @@ def get_invoice_data():
 
     return invoice_data
 
+
 def format_invoice_to_display(invoice):
     """
     Formatuje dane faktury do wyświetlenia.
-    
+
     Argumenty:
     - invoice: Słownik zawierający dane faktury.
-    
+
     Zwraca:
     - issue_rate: Kurs waluty na dzień wystawienia faktury.
     - payment_dates_rates: Lista dat płatności wraz z kursami walut.
@@ -276,8 +306,9 @@ def format_invoice_to_display(invoice):
         total_difference_str = f"[green]{total_difference_str}[/green]"
     return issue_rate, payment_dates_rates, differences, payment_status, payment_status_value, total_difference_str
 
+
 def display_results(invoices):
-    #Funkcja wyświetlająca wyniki w tabeli.
+    # Funkcja wyświetlająca wyniki w tabeli.
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Numer faktury")
     table.add_column("Waluta")
@@ -295,16 +326,31 @@ def display_results(invoices):
         if result is None:
             continue
         issue_rate, payment_dates_rates, differences, payment_status, payment_status_value, total_difference_str = result
-        table.add_row(str(invoice['invoice_number']), invoice['currency'], str(invoice['value']), str(issue_rate), '\n'.join(payment_dates_rates), '\n'.join(differences), payment_status, str(payment_status_value), total_difference_str)
-        table.add_row("-", "-", "-", "-", "-", "-", "-", "-", "-")  # Dodajemy pusty wiersz jako separator.
+        table.add_row(
+            str(invoice['invoice_number']),
+            invoice['currency'],
+            str(invoice['value']),
+            str(issue_rate),
+            '\n'.join(payment_dates_rates),
+            '\n'.join(differences),
+            payment_status,
+            str(payment_status_value),
+            total_difference_str
+        )
+        table.add_row("-", "-", "-", "-", "-", "-", "-", "-", "-")
+        # Dodajemy pusty wiersz jako separator.
     console.print(table)
-    
+
+
 def print_error(msg):
-    #Funkcja wyświetlająca komunikat o błędzie.
+    # Funkcja wyświetlająca komunikat o błędzie.
     console.print(msg, style="bold red")
+
+
 def print_warning(msg):
-    #Funkcja wyświetlająca komunikat o błędzie.
+    # Funkcja wyświetlająca komunikat o błędzie.
     console.print(msg, style="bold yellow")
+
 
 def process_invoice(invoice_data):
     """
@@ -323,7 +369,8 @@ def process_invoice(invoice_data):
     value = invoice_data['value']
 
     results = []
-    total_payments = 0  # Dodajemy zmienną do przechowywania sumy płatności
+    total_payments = 0
+    # Dodajemy zmienną do przechowywania sumy płatności
 
     try:
         for payment in payments:
@@ -341,6 +388,7 @@ def process_invoice(invoice_data):
         return None
 
     return total_payments, results  # Zwracamy sumę płatności oraz wyniki
+
 
 def validate_database(data, required_keys=['invoice_number', 'value', 'currency', 'issue_date', 'payments']):
     """
@@ -362,7 +410,7 @@ def validate_database(data, required_keys=['invoice_number', 'value', 'currency'
 
 
 def run_interactive_mode():
-    #Funkcja uruchamiająca tryb interaktywny.
+    # Funkcja uruchamiająca tryb interaktywny.
     while True:
         invoice_data = get_invoice_data()
         if invoice_data is None:
@@ -371,7 +419,7 @@ def run_interactive_mode():
             correct_input = Prompt.ask("Czy poprawnie wprowadziłeś dane? (t/n) ")
             if correct_input.lower() == 't':
                 save_invoice_data(invoice_data)
-                display_results([invoice_data]) 
+                display_results([invoice_data])
                 save_to_file_input = Prompt.ask("Czy chcesz zapisać fakturę do pojedynczego pliku? (t/n) ")
                 if save_to_file_input.lower() == 't':
                     save_single_invoice_to_file(invoice_data)
@@ -381,6 +429,7 @@ def run_interactive_mode():
         continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
         if continue_input.lower() != 't':
             break
+
 
 def run_batch_mode():
     # Funkcja uruchamiająca tryb wsadowy.
@@ -414,10 +463,11 @@ def run_batch_mode():
             print_error(str(e))
 
     console.input("Naciśnij Enter, aby kontynuować...\n")
-    
+
+
 def main():
     try:
-        #Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
+        # Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
         console.print("Witaj w programie do obliczania różnic kursowych!\n")
         console.print("Wybierz tryb pracy:\n")
         console.print("1. Tryb interaktywny\n")
@@ -438,13 +488,12 @@ def main():
     except KeyboardInterrupt:
         console.print("\nProgram zakończony przez użytkownika.")
         exit(0)
-        
+
 
 if __name__ == '__main__':
-    #Wywołanie funkcji głównej programu.
+    # Wywołanie funkcji głównej programu.
     try:
         main()
     except Exception:
         console.print("Wystąpił błąd:")
         console.print(traceback.format_exc())
-
