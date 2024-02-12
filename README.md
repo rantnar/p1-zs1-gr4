@@ -1,5 +1,8 @@
 # p1-zs1-gr4 - Obliczanie różnic kursowych
 
+## Ostatnie wydanie
+https://github.com/rantnar/p1-zs1-gr4/releases/latest
+
 ## Wymagania
 
 - Python 3.6 lub nowszy
