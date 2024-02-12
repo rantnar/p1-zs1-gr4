@@ -155,8 +155,9 @@ def validate_invoice_number(existing_invoices):
         not re.match(r"^[a-zA-Z0-9-/]+$", invoice_number) or
         any(invoice['invoice_number'] == invoice_number for invoice in existing_invoices)
     ):
+        print_error("Nieprawidłowy numer faktury lub numer faktury już istnieje.")
         invoice_number = Prompt.ask(
-            "Nieprawidłowy numer faktury lub numer faktury już istnieje. Wprowadź ponownie: "
+            "Wprowadź ponownie: "
         )
     return invoice_number
 
@@ -168,15 +169,17 @@ def validate_value():
         try:
             return float(value)
         except ValueError:
-            value = Prompt.ask("Nieprawidłowa wartość faktury. Wprowadź ponownie: ")
+            print_error("Nieprawidłowa wartość. Proszę wprowadzić liczbę.")
+            value = Prompt.ask("Wprowadź ponownie: ")
 
 
 def validate_currency():
     # Funkcja walidująca walutę, zwraca poprawną walutę.
-    currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ")
-    while currency not in ['EUR', 'USD', 'GBP', 'PLN']:
-        currency = Prompt.ask("Nieprawidłowa waluta. Dozwolone waluty to "
-                              "EUR, USD, GBP i PLN. Wprowadź ponownie: ")
+    while True:
+        currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ").upper()
+        if currency in ['EUR', 'USD', 'GBP', 'PLN']:
+            break
+        print_error("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN.")
     return currency
 
 
@@ -254,7 +257,7 @@ def get_invoice_data():
             break
         else:
             print_warning("Płatność jest mniejsza niż wartość faktury.")
-            should_continue = input("Czy chcesz wprowadzić kolejną płatność? (t/n): ")
+            should_continue = input("Czy chcesz wprowadzić kolejną płatność? (t/n): ").lower()
             if should_continue.lower() != 't':
                 break
 
@@ -335,7 +338,7 @@ def display_results(invoices):
             '\n'.join(payment_dates_rates),
             '\n'.join(differences),
             payment_status,
-            str(payment_status_value),
+            str(round(payment_status_value, 2)),
             total_difference_str
         )
         table.add_row("-", "-", "-", "-", "-", "-", "-", "-", "-")
@@ -391,7 +394,9 @@ def process_invoice(invoice_data):
     return total_payments, results  # Zwracamy sumę płatności oraz wyniki
 
 
-def validate_database(data, required_keys=['invoice_number', 'value', 'currency', 'issue_date', 'payments']):
+def validate_database(data, required_keys=None):
+    if required_keys is None:
+        required_keys = ['invoice_number', 'value', 'currency', 'issue_date', 'payments']
     """
     Waliduje klucze w danych faktury.
 
@@ -417,17 +422,17 @@ def run_interactive_mode():
         if invoice_data is None:
             continue
         while True:
-            correct_input = Prompt.ask("Czy poprawnie wprowadziłeś dane? (t/n) ")
+            correct_input = Prompt.ask("Czy poprawnie wprowadziłeś dane? (t/n) ").lower()
             if correct_input.lower() == 't':
                 save_invoice_data(invoice_data)
                 display_results([invoice_data])
-                save_to_file_input = Prompt.ask("Czy chcesz zapisać fakturę do pojedynczego pliku? (t/n) ")
+                save_to_file_input = Prompt.ask("Czy chcesz zapisać fakturę do pojedynczego pliku? (t/n) ").lower()
                 if save_to_file_input.lower() == 't':
                     save_single_invoice_to_file(invoice_data)
                 break
             elif correct_input.lower() == 'n':
                 break
-        continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ")
+        continue_input = Prompt.ask("Czy chcesz wprowadzić kolejną fakturę? (t/n) ").lower()
         if continue_input.lower() != 't':
             break
 
@@ -466,35 +471,36 @@ def run_batch_mode():
     console.input("Naciśnij Enter, aby kontynuować...\n")
 
 
+def display_menu():
+    # Funkcja wyświetlająca menu wyboru trybu pracy.
+    console.print("Witaj w programie do obliczania różnic kursowych!\n")
+    console.print("Wybierz tryb pracy:\n")
+    console.print("1. Tryb interaktywny\n")
+    console.print("2. Tryb wsadowy\n")
+    console.print("3. Wyjście\n")
+
+
+def exit_program():
+    print("Zamykanie programu...")
+    sys.exit()
+
+
 def main():
     try:
-        # Funkcja główna programu. Wyświetla menu wyboru trybu pracy.
-        console.print("Witaj w programie do obliczania różnic kursowych!\n")
-        console.print("Wybierz tryb pracy:\n")
-        console.print("1. Tryb interaktywny\n")
-        console.print("2. Tryb wsadowy\n")
-        console.print("3. Wyjście\n")
-
+        display_menu()
+        modes = {"1": run_interactive_mode, "2": run_batch_mode, "3": exit_program}
         mode = Prompt.ask("Wybór: ")
-        while mode not in ["1", "2", "3"]:
+        while mode not in modes:
             mode = Prompt.ask("Nieprawidłowy wybór. Wprowadź ponownie: ")
-
-        if mode == "1":
-            run_interactive_mode()
-        elif mode == "2":
-            run_batch_mode()
-        elif mode == "3":
-            console.print("Wychodzę z programu.")
-            exit(0)
+        modes[mode]()
     except KeyboardInterrupt:
         console.print("\nProgram zakończony przez użytkownika.")
         exit(0)
+    except Exception:
+        console.print("Wystąpił błąd:")
+        console.print(traceback.format_exc())
 
 
 if __name__ == '__main__':
     # Wywołanie funkcji głównej programu.
-    try:
-        main()
-    except Exception:
-        console.print("Wystąpił błąd:")
-        console.print(traceback.format_exc())
+    main()
