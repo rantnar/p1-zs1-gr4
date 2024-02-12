@@ -143,6 +143,7 @@ def save_invoice_data(invoice_data, file_path='data.json'):
 
 def save_single_invoice_to_file(invoice_data):
     # Funkcja zapisująca dane faktury do pojedynczego pliku JSON.
+    os.makedirs('data', exist_ok=True)
     with open(f'data/{invoice_data["invoice_number"]}.json', 'w') as file:
         json.dump([invoice_data], file)
 
