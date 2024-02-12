@@ -37,4 +37,7 @@ W tej chwili z programu wychodzimy zamykając terminal, albo wysyłając sygnał
   ]
 }]
 ```
+## Dokumentacja
+Dokumentacja oraz raport projektowy znajdują sie na Wiki projektu na githubie.
 ### Użytkownicy windows muszą upewnić się, że mają zainstalowany pip, oraz znajduje się on w PATH. Rozwiązaniem może być instalacja python wprost z Microsoft Store.
+
