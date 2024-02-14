@@ -178,9 +178,8 @@ def validate_currency():
     while True:
         currency = Prompt.ask("Waluta(EUR, USD, GBP, PLN): ").upper()
         if currency in ['EUR', 'USD', 'GBP', 'PLN']:
-            break
-        print_error("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN.")
-    return currency
+            return currency
+        print("Nieprawidłowa waluta. Dozwolone waluty to EUR, USD, GBP i PLN.")
 
 
 def validate_date(prompt, earliest_date=None):
