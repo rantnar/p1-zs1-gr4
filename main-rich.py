@@ -264,6 +264,26 @@ def get_invoice_data():
     return invoice_data
 
 
+def return_color(value):
+    if value > 0:
+        return "[red]"
+    elif value < 0:
+        return "[blue]"
+    else:
+        return "[green]"
+    
+
+def format_difference(difference):
+    return return_color(difference) + str(round(difference, 2)) + " PLN"
+
+
+def format_payment_status(payment_status_value):
+    return (return_color(payment_status_value) +
+            ("NIEDOPŁATA" if payment_status_value > 0
+             else "NADPŁATA" if payment_status_value < 0
+             else "OK"))
+
+
 def format_invoice_to_display(invoice):
     """
     Formatuje dane faktury do wyświetlenia.
@@ -289,25 +309,11 @@ def format_invoice_to_display(invoice):
     for result in results:
         issue_rate, payment_date, payment_rate, difference = result
         payment_dates_rates.append(payment_date + " Kurs: " + str(payment_rate))
-        difference_str = str(round(difference, 2)) + " PLN"
         total_difference += difference
-        if difference > 0:
-            difference_str = f"[red]{difference_str}[/red]"
-        else:
-            difference_str = f"[green]{difference_str}[/green]"
-        differences.append(difference_str)
+        differences.append(format_difference(difference))
     payment_status_value = invoice['value'] - total_payments  # Obliczamy status płatności.
-    if payment_status_value < 0:
-        payment_status = "[blue]NADPŁATA[/blue]"
-    elif payment_status_value > 0:
-        payment_status = "[yellow]NIEDOPŁATA[/yellow]"
-    else:
-        payment_status = "[green][bold]OK[/bold][/green]"
-    total_difference_str = str(round(total_difference, 2)) + " PLN"
-    if total_difference > 0:
-        total_difference_str = f"[red]{total_difference_str}[/red]"
-    else:
-        total_difference_str = f"[green]{total_difference_str}[/green]"
+    payment_status = format_payment_status(payment_status_value)
+    total_difference_str = format_difference(total_difference)
     return issue_rate, payment_dates_rates, differences, payment_status, payment_status_value, total_difference_str
 
 
